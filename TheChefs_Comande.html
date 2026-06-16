@@ -37,7 +37,7 @@ input,select,textarea{font-family:inherit;font-size:13px;padding:9px 11px;border
 .cc.urg{border-left-color:var(--r);background:#fff5f5}.cc.wip{border-left-color:var(--go)}
 @keyframes si{from{transform:translateX(-16px);opacity:0}to{transform:translateX(0);opacity:1}}
 /* Print 80mm */
-@media print{body *{visibility:hidden}#pa,#pa *{visibility:visible}#pa{position:fixed;top:0;left:0;width:72mm;font-family:'Courier New',monospace;font-size:11px;line-height:1.3;padding:2mm}.bar,.tbb,.toast{display:none!important}@page{size:80mm auto;margin:0}}
+@media print{body *{visibility:hidden}#pa,#pa *{visibility:visible}#pa{position:fixed;top:0;left:0;width:72mm;padding:2mm;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#pa *{color:#000!important;font-weight:900!important}.bar,.tbb,.toast{display:none!important}@page{size:80mm auto;margin:0}}
 /* Overlay */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;overflow-y:auto;padding:8px;display:flex;align-items:flex-start;justify-content:center}
 .ov-box{background:#fff;border-radius:14px;width:100%;max-width:1100px;margin-top:20px;overflow:hidden}
@@ -926,15 +926,33 @@ async function chSt(s,id,st){const u=fb('ordini_'+s+'_'+oggi()+'/'+id+'/stato');
   const c=cmd.find(x=>x.id===id);if(c)c.stato=st;rCmd();if(st==='pronto')toast('✅ Pronto!','var(--g)')}
 
 function prn(id){const c=cmd.find(x=>x.id===id);if(!c)return;
-  let h='<div style="font-family:Courier New,monospace;font-size:11px;width:72mm">';
-  h+='<div style="text-align:center;font-weight:700;font-size:13px;border-bottom:2px solid #000;padding-bottom:3px">'+(C.nome||'RISTORANTE')+'</div>';
-  h+='<div style="text-align:center;font-size:9px;margin:4px 0">'+c.data+' '+c.ora+' '+(c.servizio==='pranzo'?'PRANZO':'OSTERIA')+'</div>';
-  h+='<div style="text-align:center;font-size:22px;font-weight:700;border:2px solid #000;padding:3px;margin:4px 0">TAVOLO '+c.tavolo+'</div>';
-  h+='<div style="font-size:9px">Coperti:'+c.coperti+' Cam:'+c.cameriere+'</div><div style="border-top:1px dashed #000;margin:3px 0"></div>';
-  c.piatti.forEach(p=>{h+='<div style="font-size:12px;padding:1px 0"><b>'+p.qty+'x</b> '+p.nome.toUpperCase()+'</div>'});
-  h+='<div style="border-top:1px dashed #000;margin:3px 0"></div>';
-  if(c.note)h+='<div style="font-size:10px;font-weight:700">*** '+c.note.toUpperCase()+' ***</div>';
-  h+='<div style="text-align:center;font-size:7px;margin-top:4px;border-top:1px dashed #000;padding-top:2px">TheChefs Comande</div></div>';
+  const CAT_ORD=['antipasto','primo','secondo','pesce','contorno','dolce','bevanda','altro'];
+  const CAT_LBL={'antipasto':'ANTIPASTI','primo':'PRIMI','secondo':'SECONDI CARNE','pesce':'PESCE','contorno':'CONTORNI','dolce':'DOLCI','bevanda':'BEVANDE','altro':'ALTRO'};
+  // Raggruppa piatti per categoria nell'ordine di servizio
+  const gruppi={};
+  c.piatti.forEach(p=>{const cat=p.cat||'altro';if(!gruppi[cat])gruppi[cat]=[];gruppi[cat].push(p)});
+  let h='<div style="font-family:Courier New,monospace;width:72mm;color:#000">';
+  // Intestazione
+  h+='<div style="text-align:center;font-weight:900;font-size:14px;border-bottom:3px solid #000;padding-bottom:4px;letter-spacing:1px">'+(C.nome||'RISTORANTE').toUpperCase()+'</div>';
+  h+='<div style="text-align:center;font-size:10px;font-weight:700;margin:3px 0">'+c.data+' · '+c.ora+' · '+(c.servizio==='pranzo'?'PRANZO':'OSTERIA')+'</div>';
+  h+='<div style="text-align:center;font-size:26px;font-weight:900;border:3px solid #000;padding:4px;margin:4px 0;letter-spacing:2px">TAVOLO '+c.tavolo+'</div>';
+  h+='<div style="font-size:10px;font-weight:700">Coperti: '+c.coperti+' &nbsp;·&nbsp; Cam: '+(c.cameriere||'—')+'</div>';
+  h+='<div style="border-top:2px dashed #000;margin:4px 0"></div>';
+  // Piatti raggruppati per categoria
+  CAT_ORD.forEach(cat=>{
+    if(!gruppi[cat])return;
+    h+='<div style="font-size:9px;font-weight:900;text-decoration:underline;margin-top:5px;letter-spacing:1px">'+CAT_LBL[cat]+'</div>';
+    gruppi[cat].forEach(p=>{
+      h+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;padding:2px 0;border-bottom:1px solid #ccc">';
+      h+='<span>'+p.nome.toUpperCase()+'</span>';
+      h+='<span style="font-size:14px;font-weight:900;min-width:28px;text-align:right">&nbsp;'+p.qty+'x</span>';
+      h+='</div>';
+    });
+  });
+  h+='<div style="border-top:2px dashed #000;margin:5px 0"></div>';
+  if(c.note)h+='<div style="font-size:12px;font-weight:900;border:2px solid #000;padding:3px;margin-bottom:4px">⚠ NOTE: '+c.note.toUpperCase()+'</div>';
+  h+='<div style="text-align:center;font-size:8px;font-weight:700;border-top:1px dashed #000;padding-top:3px;margin-top:2px">TheChefs Comande · '+c.ts+'</div>';
+  h+='</div>';
   $('pa').innerHTML=h;$('pa').classList.remove('hid');setTimeout(()=>{window.print();$('pa').classList.add('hid')},200)}
 </script>
 </body></html>
