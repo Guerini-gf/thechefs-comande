@@ -915,7 +915,7 @@ async function refresh(){
     nw.forEach(c=>{
       if(!stampati.has(c.id)){
         stampati.add(c.id);
-        setTimeout(()=>prn(c.id),300); // piccolo delay per evitare sovrapposizioni
+        setTimeout(()=>prn(c.id,true),300);
       }
     });
   }
@@ -946,7 +946,7 @@ async function chSt(s,id,st){const u=fb('ordini_'+s+'_'+oggi()+'/'+id+'/stato');
   await fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(st)});
   const c=cmd.find(x=>x.id===id);if(c)c.stato=st;rCmd();if(st==='pronto')toast('✅ Pronto!','var(--g)')}
 
-function prn(id){const c=cmd.find(x=>x.id===id);if(!c)return;
+function prn(id,silent=false){const c=cmd.find(x=>x.id===id);if(!c)return;
   const CAT_ORD=['antipasto','primo','secondo','pesce','contorno','dolce','bevanda','altro'];
   const CAT_LBL={'antipasto':'── ANTIPASTI ──','primo':'── PRIMI ──','secondo':'── SECONDI ──','pesce':'── PESCE ──','contorno':'── CONTORNI ──','dolce':'── DOLCI ──','bevanda':'── BEVANDE ──','altro':'── ALTRO ──'};
   const gruppi={};
@@ -957,7 +957,6 @@ function prn(id){const c=cmd.find(x=>x.id===id);if(!c)return;
   h+='<div style="text-align:center;font-size:28px;font-weight:900;border:3px solid #000;padding:3px;margin:4px 0;letter-spacing:3px">TAVOLO '+c.tavolo+'</div>';
   h+='<div style="font-size:10px;font-weight:900">Coperti: '+c.coperti+' · Cam: '+(c.cameriere||'—')+'</div>';
   h+='<div style="border-top:2px dashed #000;margin:4px 0"></div>';
-  // Piatti: QTY a sinistra in grande, poi nome
   CAT_ORD.forEach(cat=>{
     if(!gruppi[cat])return;
     h+='<div style="font-size:9px;font-weight:900;text-decoration:underline;margin:5px 0 2px;letter-spacing:2px;text-align:center">'+CAT_LBL[cat]+'</div>';
@@ -972,6 +971,19 @@ function prn(id){const c=cmd.find(x=>x.id===id);if(!c)return;
   if(c.note)h+='<div style="font-size:12px;font-weight:900;border:3px solid #000;padding:4px;margin-bottom:4px;text-align:center">!!! '+c.note.toUpperCase()+' !!!</div>';
   h+='<div style="text-align:center;font-size:8px;font-weight:900;padding-top:3px">TheChefs Comande</div>';
   h+='</div>';
-  $('pa').innerHTML=h;$('pa').classList.remove('hid');setTimeout(()=>{window.print();$('pa').classList.add('hid')},200)}
+  if(silent){
+    // Stampa silenziosa via iframe — nessun dialogo di conferma
+    let fr=document.getElementById('print-frame');
+    if(!fr){fr=document.createElement('iframe');fr.id='print-frame';fr.style.cssText='position:fixed;top:-9999px;left:-9999px;width:80mm;height:1px;border:none;visibility:hidden';document.body.appendChild(fr)}
+    const doc=fr.contentDocument||fr.contentWindow.document;
+    doc.open();
+    doc.write('<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}body{color:#000;font-weight:900}@page{size:80mm auto;margin:2mm}</style></head><body>'+h+'</body></html>');
+    doc.close();
+    setTimeout(()=>{try{fr.contentWindow.focus();fr.contentWindow.print();toast('🖨️ Stampa automatica T'+c.tavolo,'var(--g)')}catch(e){toast('⚠️ Stampa fallita: '+e.message,'var(--r)')}},500);
+  } else {
+    // Stampa manuale con dialogo
+    $('pa').innerHTML=h;$('pa').classList.remove('hid');setTimeout(()=>{window.print();$('pa').classList.add('hid')},200);
+  }
+}
 </script>
 </body></html>
