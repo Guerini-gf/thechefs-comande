@@ -730,36 +730,39 @@ function rSala(){
   const menu=srv==='pranzo'?mP:mO,div=$('s1-piatti');
   if(!menu.length){div.innerHTML='<div style="text-align:center;padding:24px;color:var(--m)"><div style="font-size:32px;margin-bottom:8px">'+(srv==='pranzo'?'☀️':'🌙')+'</div><div style="font-weight:700;margin-bottom:4px">Menu '+(srv==='pranzo'?'Pranzo':'Osteria')+' non ancora inserito</div><div style="font-size:11px;margin-bottom:12px">La cucina deve inserire e salvare il menu prima</div><button class="btn bs bo" style="margin-top:4px" onclick="loadSala()">🔄 Ricarica da Firebase</button></div>';return}
   let h='';
+  function row(id,nome,cat,colore){
+    const s=sel.find(x=>x.id===id),q=s?s.qty:0;
+    const bc=q>0?colore:'#ddd', bg=q>0?(colore==='var(--g)'?'var(--gl)':colore==='var(--go)'?'#fff8e1':'#efebe9'):'';
+    return '<div style="display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #f0f0f0;gap:6px'+(bg?';background:'+bg:'')+'">'
+      +'<div style="flex:1;font-size:13px;font-weight:600;line-height:1.3" onclick="inc(\''+id+'\',\''+nome.replace(/'/g,"\\'")+ '\',\''+cat+'\',1)">'+nome+'</div>'
+      +'<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
+      +'<button onclick="inc(\''+id+'\',\''+nome.replace(/'/g,"\\'")+'\',\''+cat+'\',-1)" style="width:34px;height:34px;border:2px solid '+bc+';border-radius:50%;background:#fff;color:'+bc+';font-size:20px;font-weight:900;line-height:1;cursor:pointer">−</button>'
+      +'<span style="min-width:28px;text-align:center;font-size:17px;font-weight:900;color:'+(q>0?colore:'#bbb')+'">'+q+'</span>'
+      +'<button onclick="inc(\''+id+'\',\''+nome.replace(/'/g,"\\'")+'\',\''+cat+'\',1)" style="width:34px;height:34px;border:2px solid '+bc+';border-radius:50%;background:'+(q>0?colore:'#fff')+';color:'+(q>0?'#fff':bc)+';font-size:20px;font-weight:900;line-height:1;cursor:pointer">+</button>'
+      +'</div></div>'}
   OC.forEach(cat=>{const pp=menu.filter(p=>p.cat===cat);if(!pp.length)return;
     h+='<div class="cat-h">'+(CI[cat]||'')+' '+(CN[cat]||cat)+'</div>';
-    pp.forEach(p=>{const s=sel.find(x=>x.id===p.id),q=s?s.qty:0;
-      h+='<div style="display:flex;align-items:center;padding:9px 10px;border-bottom:1px solid #f0f0f0;gap:8px'+(q>0?';background:var(--gl)':'')+'">';
-      h+='<div style="flex:1;cursor:pointer" onclick="sq(\''+p.id+'\','+(q+1)+')"><div style="font-size:13px;font-weight:600">'+p.nome+'</div></div>';
-      h+='<input type="number" min="0" max="30" value="'+q+'" style="width:48px;height:36px;text-align:center;font-size:16px;font-weight:700;border:2px solid '+(q>0?'var(--g)':'#ddd')+';border-radius:7px;color:'+(q>0?'var(--g)':'#333')+'" onchange="sq(\''+p.id+'\',parseInt(this.value)||0)" onclick="this.select()">';
-      h+='</div>'})});
+    pp.forEach(p=>{h+=row(p.id,p.nome,p.cat,'var(--g)')})});
   // Bevande
   h+='<div style="padding:8px 10px;background:var(--go);color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px">🍷 Bibite / Vino</div>';
   ['Acqua Naturale','Acqua Frizzante','Vino Rosso Casa','Vino Bianco Casa','Birra alla Spina','Coca Cola','Succo di Frutta','Vino Bottiglia'].forEach(b=>{
-    const id='bv_'+b.replace(/\s/g,'_'),s=sel.find(x=>x.id===id),q=s?s.qty:0;
-    h+='<div style="display:flex;align-items:center;padding:7px 10px;border-bottom:1px solid #f0f0f0;gap:8px'+(q>0?';background:#fff8e1':'')+'">';
-    h+='<div style="flex:1;font-size:12px;font-weight:600;cursor:pointer" onclick="sq(\''+id+'\','+(q+1)+',\''+b+'\',\'bevanda\')">🍷 '+b+'</div>';
-    h+='<input type="number" min="0" max="30" value="'+q+'" style="width:48px;height:32px;text-align:center;font-size:14px;font-weight:700;border:2px solid '+(q>0?'var(--go)':'#ddd')+';border-radius:7px" onchange="sq(\''+id+'\',parseInt(this.value)||0,\''+b+'\',\'bevanda\')" onclick="this.select()"></div>'});
+    h+=row('bv_'+b.replace(/\s/g,'_'),'🍷 '+b,'bevanda','var(--go)')});
   h+='<div style="padding:8px 10px;background:#795548;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px">☕ Caffè / Alcolici</div>';
   ['Caffè','Caffè Decaffeinato','Caffè Corretto','Amaro','Grappa','Limoncello','Digestivo'].forEach(b=>{
-    const id='cf_'+b.replace(/\s/g,'_'),s=sel.find(x=>x.id===id),q=s?s.qty:0;
-    h+='<div style="display:flex;align-items:center;padding:7px 10px;border-bottom:1px solid #f0f0f0;gap:8px'+(q>0?';background:#efebe9':'')+'">';
-    h+='<div style="flex:1;font-size:12px;font-weight:600;cursor:pointer" onclick="sq(\''+id+'\','+(q+1)+',\''+b+'\',\'bevanda\')">☕ '+b+'</div>';
-    h+='<input type="number" min="0" max="30" value="'+q+'" style="width:48px;height:32px;text-align:center;font-size:14px;font-weight:700;border:2px solid '+(q>0?'#795548':'#ddd')+';border-radius:7px" onchange="sq(\''+id+'\',parseInt(this.value)||0,\''+b+'\',\'bevanda\')" onclick="this.select()"></div>'});
+    h+=row('cf_'+b.replace(/\s/g,'_'),'☕ '+b,'bevanda','#795548')});
   // Riepilogo
   if(sel.length){h+='<div style="padding:10px;background:var(--gl);border-top:2px solid var(--g)"><div style="font-size:11px;font-weight:700;color:var(--g);margin-bottom:4px">RIEPILOGO — Tavolo '+tav+'</div>';
-    sel.forEach(p=>{h+='<div style="font-size:12px;padding:1px 0"><b>'+p.qty+'x</b> '+p.nome+'</div>'});
+    sel.forEach(p=>{h+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:1px 0"><span>'+p.nome+'</span><b>'+p.qty+'x</b></div>'});
     h+='<div style="font-size:11px;font-weight:700;color:var(--g);margin-top:4px;padding-top:4px;border-top:1px solid var(--g)">Tot: '+sel.reduce((a,p)=>a+p.qty,0)+' voci · '+cov+' coperti</div></div>'}
   div.innerHTML=h}
 
 function sq(id,q,nm,ct){
+  if(q<0)q=0;
   if(q<=0){sel=sel.filter(s=>s.id!==id)}
-  else{const ex=sel.find(s=>s.id===id);if(ex)ex.qty=q;else{const menu=srv==='pranzo'?mP:mO;const p=menu.find(m=>m.id===id);sel.push({id,nome:nm||(p?p.nome:id),cat:ct||(p?p.cat:'altro'),qty:q})}}
+  else{const ex=sel.find(s=>s.id===id);if(ex){ex.qty=q}else{const menu=srv==='pranzo'?mP:mO;const p=menu.find(m=>m.id===id);sel.push({id,nome:nm||(p?p.nome:id),cat:ct||(p?p.cat:'altro'),qty:q})}}
   rSala()}
+// Incrementa qty leggendo il valore REALE da sel (non dal DOM statico)
+function inc(id,nm,ct,delta){const ex=sel.find(s=>s.id===id);const q=(ex?ex.qty:0)+delta;sq(id,q,nm,ct)}
 
 async function send(){
   if(!sel.length){alert('Seleziona almeno un piatto!');return}
@@ -927,31 +930,29 @@ async function chSt(s,id,st){const u=fb('ordini_'+s+'_'+oggi()+'/'+id+'/stato');
 
 function prn(id){const c=cmd.find(x=>x.id===id);if(!c)return;
   const CAT_ORD=['antipasto','primo','secondo','pesce','contorno','dolce','bevanda','altro'];
-  const CAT_LBL={'antipasto':'ANTIPASTI','primo':'PRIMI','secondo':'SECONDI CARNE','pesce':'PESCE','contorno':'CONTORNI','dolce':'DOLCI','bevanda':'BEVANDE','altro':'ALTRO'};
-  // Raggruppa piatti per categoria nell'ordine di servizio
+  const CAT_LBL={'antipasto':'── ANTIPASTI ──','primo':'── PRIMI ──','secondo':'── SECONDI ──','pesce':'── PESCE ──','contorno':'── CONTORNI ──','dolce':'── DOLCI ──','bevanda':'── BEVANDE ──','altro':'── ALTRO ──'};
   const gruppi={};
   c.piatti.forEach(p=>{const cat=p.cat||'altro';if(!gruppi[cat])gruppi[cat]=[];gruppi[cat].push(p)});
-  let h='<div style="font-family:Courier New,monospace;width:72mm;color:#000">';
-  // Intestazione
-  h+='<div style="text-align:center;font-weight:900;font-size:14px;border-bottom:3px solid #000;padding-bottom:4px;letter-spacing:1px">'+(C.nome||'RISTORANTE').toUpperCase()+'</div>';
-  h+='<div style="text-align:center;font-size:10px;font-weight:700;margin:3px 0">'+c.data+' · '+c.ora+' · '+(c.servizio==='pranzo'?'PRANZO':'OSTERIA')+'</div>';
-  h+='<div style="text-align:center;font-size:26px;font-weight:900;border:3px solid #000;padding:4px;margin:4px 0;letter-spacing:2px">TAVOLO '+c.tavolo+'</div>';
-  h+='<div style="font-size:10px;font-weight:700">Coperti: '+c.coperti+' &nbsp;·&nbsp; Cam: '+(c.cameriere||'—')+'</div>';
+  let h='<div style="font-family:Courier New,monospace;width:72mm;color:#000;font-weight:900">';
+  h+='<div style="text-align:center;font-size:13px;font-weight:900;border-bottom:3px solid #000;padding-bottom:3px;letter-spacing:2px">'+(C.nome||'RISTORANTE').toUpperCase()+'</div>';
+  h+='<div style="text-align:center;font-size:10px;font-weight:900;margin:3px 0;letter-spacing:1px">'+c.data+' · '+c.ora+' · '+(c.servizio==='pranzo'?'PRANZO':'OSTERIA')+'</div>';
+  h+='<div style="text-align:center;font-size:28px;font-weight:900;border:3px solid #000;padding:3px;margin:4px 0;letter-spacing:3px">TAVOLO '+c.tavolo+'</div>';
+  h+='<div style="font-size:10px;font-weight:900">Coperti: '+c.coperti+' · Cam: '+(c.cameriere||'—')+'</div>';
   h+='<div style="border-top:2px dashed #000;margin:4px 0"></div>';
-  // Piatti raggruppati per categoria
+  // Piatti: QTY a sinistra in grande, poi nome
   CAT_ORD.forEach(cat=>{
     if(!gruppi[cat])return;
-    h+='<div style="font-size:9px;font-weight:900;text-decoration:underline;margin-top:5px;letter-spacing:1px">'+CAT_LBL[cat]+'</div>';
+    h+='<div style="font-size:9px;font-weight:900;text-decoration:underline;margin:5px 0 2px;letter-spacing:2px;text-align:center">'+CAT_LBL[cat]+'</div>';
     gruppi[cat].forEach(p=>{
-      h+='<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;padding:2px 0;border-bottom:1px solid #ccc">';
-      h+='<span>'+p.nome.toUpperCase()+'</span>';
-      h+='<span style="font-size:14px;font-weight:900;min-width:28px;text-align:right">&nbsp;'+p.qty+'x</span>';
+      h+='<div style="display:flex;align-items:baseline;gap:4px;padding:3px 0;border-bottom:1px dotted #000">';
+      h+='<span style="font-size:16px;font-weight:900;min-width:28px">'+p.qty+'x</span>';
+      h+='<span style="font-size:12px;font-weight:900;line-height:1.2">'+p.nome.toUpperCase()+'</span>';
       h+='</div>';
     });
   });
-  h+='<div style="border-top:2px dashed #000;margin:5px 0"></div>';
-  if(c.note)h+='<div style="font-size:12px;font-weight:900;border:2px solid #000;padding:3px;margin-bottom:4px">⚠ NOTE: '+c.note.toUpperCase()+'</div>';
-  h+='<div style="text-align:center;font-size:8px;font-weight:700;border-top:1px dashed #000;padding-top:3px;margin-top:2px">TheChefs Comande · '+c.ts+'</div>';
+  h+='<div style="border-top:3px dashed #000;margin:5px 0"></div>';
+  if(c.note)h+='<div style="font-size:12px;font-weight:900;border:3px solid #000;padding:4px;margin-bottom:4px;text-align:center">!!! '+c.note.toUpperCase()+' !!!</div>';
+  h+='<div style="text-align:center;font-size:8px;font-weight:900;padding-top:3px">TheChefs Comande</div>';
   h+='</div>';
   $('pa').innerHTML=h;$('pa').classList.remove('hid');setTimeout(()=>{window.print();$('pa').classList.add('hid')},200)}
 </script>
